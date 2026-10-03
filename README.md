@@ -26,6 +26,19 @@ Bubble Tea TUI binary (`manx-tui`) as the target interactive interface.
 
 [![ci](https://github.com/MTG-Thomas/manx/actions/workflows/ci.yml/badge.svg)](https://github.com/MTG-Thomas/manx/actions/workflows/ci.yml)
 
+## Verifying a release
+
+Every release ships `SHA256SUMS` plus a keyless (OIDC) cosign bundle
+`SHA256SUMS.sigstore.json`, signed by the `sign-release` GitHub Actions lane:
+
+```sh
+sha256sum -c SHA256SUMS
+cosign verify-blob --bundle SHA256SUMS.sigstore.json \
+  --certificate-identity-regexp '^https://github.com/MTG-Thomas/manx/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  SHA256SUMS
+```
+
 ## Layout (codex-swarm parity)
 
 ```

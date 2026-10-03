@@ -1,0 +1,14 @@
+---
+# MANX first-boot toolkit staging (bench variant: also brings up sshd for the
+# operator's SSH lane). See the base variant's 10-manx-autorun.yaml for why
+# YAML-config autorun is used instead of name-based.
+autorun:
+    exec:
+        100:
+            path: "/run/archiso/bootmnt/autorun/00-manx-setup.sh"
+            wait: never
+            on_error: continue
+        200:
+            path: "/run/archiso/bootmnt/autorun/00-manx-bench-sshd.sh"
+            wait: never
+            on_error: continue

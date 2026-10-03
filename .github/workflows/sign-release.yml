@@ -1,0 +1,49 @@
+name: sign-release
+# Keyless (OIDC) signing of the SHA256SUMS manifest on a published release.
+# Complements BOTH release lanes: fires automatically when a release is
+# published (including the manual `gh release create` lane), or runs manually
+# via workflow_dispatch to (re)sign an existing tag.
+# Output: SHA256SUMS.sigstore.json uploaded to the release; verify with
+#   cosign verify-blob --bundle SHA256SUMS.sigstore.json \
+#     --certificate-identity-regexp '^https://github.com/MTG-Thomas/manx/' \
+#     --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+#     SHA256SUMS
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag of the release to sign (e.g. v0.0.3)
+        required: true
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: resolve tag
+        id: tag
+        run: echo "tag=${{ github.event.release.tag_name || inputs.tag }}" >> "$GITHUB_OUTPUT"
+      - name: fetch SHA256SUMS from the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p 'SHA256SUMS'
+      - uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
+      - name: sign SHA256SUMS (keyless, OIDC)
+        id: sign
+        run: cosign sign-blob --yes --bundle SHA256SUMS.sigstore.json SHA256SUMS
+      - name: verify self-signed bundle (belt and braces)
+        run: |
+          cosign verify-blob \
+            --bundle SHA256SUMS.sigstore.json \
+            --certificate-identity-regexp '^https://github.com/MTG-Thomas/manx/' \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            SHA256SUMS
+      - name: upload bundle to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber SHA256SUMS.sigstore.json
