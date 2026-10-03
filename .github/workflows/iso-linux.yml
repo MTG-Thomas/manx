@@ -48,8 +48,8 @@ jobs:
         run: |
           set -e
           mkdir -p /tmp/base
-          url=$(cat manx-iso/build/BASE-URL.sha256 | head -1)
-          expected=$(cat manx-iso/build/BASE-URL.sha256 | tail -1)
+          url=$(python3 -c "import sys; print(open('manx-iso/build/BASE-URL.sha256').read().splitlines()[0])")
+          expected=$(python3 -c "import sys; print(open('manx-iso/build/BASE-URL.sha256').read().splitlines()[-1])")
           curl -L --retry 3 -o /tmp/base/sysrescue.iso "$url"
           echo "$expected  /tmp/base/sysrescue.iso" | sha256sum -c -
       - name: remaster
