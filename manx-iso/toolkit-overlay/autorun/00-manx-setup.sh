@@ -24,7 +24,9 @@ LOG=/var/log/manx-setup.log
       # motd: incident-response truths + creature care, on console and /etc/motd
       if [ -f "$DST/MOTD.txt" ]; then
         cp "$DST/MOTD.txt" /etc/manx-motd 2>/dev/null || true
-        cat "$DST/MOTD.txt" | tee /dev/ttyS0 2>/dev/null || cat "$DST/MOTD.txt"
+        # shellcheck disable=SC2002
+        # (intended: motd text is consumed by tee for the serial side-channel)
+        { cat "$DST/MOTD.txt"; } | tee /dev/ttyS0 2>/dev/null || cat "$DST/MOTD.txt"
         grep -q manx-motd /root/.bashrc 2>/dev/null || \
           echo "test -f /etc/manx-motd && cat /etc/manx-motd" >> /root/.bashrc
       fi
