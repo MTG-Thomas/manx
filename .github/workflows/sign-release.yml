@@ -17,7 +17,9 @@ on:
         description: Tag of the release to sign (e.g. v0.0.3)
         required: true
 permissions:
-  contents: read
+  # id-token: write -> keyless OIDC signing; contents: write -> upload the
+  # bundle to the release (scoped to this lane only)
+  contents: write
   id-token: write
 jobs:
   sign:
