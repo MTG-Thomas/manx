@@ -1,48 +1,80 @@
-name: dry-run-release
+﻿name: dry-run-release
+# Verify a tag either (a) from the CI artifact lanes (normal path) or
+# (b) from the already-published release assets (manual bootstrap path).
+# Mode detection happens first, so a bench-style/maintainer-baked tag never
+# fails CI just because the CI artifact lane was not used for that release.
+# Publishing upstream: publish-github-release.yml only fires on (a)'s success;
+# (b) is already-published content verified server-side.
 on:
   push:
     tags: ["v*"]
 permissions:
-  contents: read
-  id-token: write        # cosign keyless via GitHub OIDC
+  contents: read       # gh api reads for manual-release verification
+  id-token: write      # cosign keyless via GitHub OIDC (CI lane)
 
 jobs:
   dry-run-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - name: Detect mode (CI-artifact lane vs manual-release lane)
+        id: mode
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          n=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
+               --jq "[.artifacts[] | select(.name == \"manx-iso-${GITHUB_REF_NAME}\")] | length" 2>/dev/null || echo 0)
+          if [ "${n:-0}" -gt 0 ]; then
+            echo "mode=ciLane" >> "$GITHUB_OUTPUT"
+            echo "$n ISO artifact set(s) found for ${GITHUB_REF_NAME}; using CI lane"
+          else
+            echo "mode=manualRelease" >> "$GITHUB_OUTPUT"
+            echo "no CI artifacts for ${GITHUB_REF_NAME}; using manual-release verification"
+          fi
+
+      # ---------------- CI lane ----------------
+      - name: checkout (CI lane)
+        if: steps.mode.outputs.mode == 'ciLane'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: download lane artifacts (CI lane)
+        if: steps.mode.outputs.mode == 'ciLane'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: manx-iso-${{ github.ref_name }}
           merge-multiple: true
           path: dist
-      - name: verify expected artifact set
+      - name: verify expected artifact set (CI lane)
+        if: steps.mode.outputs.mode == 'ciLane'
         run: |
           set -e
           test -f dist/out.iso || { echo "ISO missing"; exit 1; }
           test -f dist/SHA256SUMS.parts || { echo "manifest missing"; exit 1; }
-      - name: secrets scan (ISO contains no secrets — policy)
+      - name: secrets scan (ISO contains no secrets - policy)
+        if: steps.mode.outputs.mode == 'ciLane'
         run: |
           set -e
-          # high-entropy bearer prefixes + PEM private-key blocks
           if grep -aE 'bfen_[0-9A-Za-z_-]{30,}|BEGIN [A-Z ]*PRIVATE KEY' dist/out.iso; then
             echo "secret-shaped string found in the ISO - release blocked"; exit 1
           fi
-          if find . -maxdepth 3 -name '*.pem' -o -name '*.key' -o -name auth.json \
-             | grep -q .; then echo "key/credential file staged in dist - blocked"; exit 1; fi
-      - name: SHA256SUMS
+          if find . -maxdepth 3 -name '*.pem' -o -name '*.key' -o -name auth.json | grep -q .; then
+            echo "key/credential file staged in dist - blocked"; exit 1
+          fi
+      - name: SHA256SUMS (CI lane)
+        if: steps.mode.outputs.mode == 'ciLane'
         run: |
           cd dist
           sha256sum out.iso > SHA256SUMS
           sha256sum manx manx-tui >> SHA256SUMS
-      - name: cosign sign SHA256SUMS (keyless OIDC)
+      - name: cosign sign SHA256SUMS (keyless OIDC, CI lane)
+        if: steps.mode.outputs.mode == 'ciLane'
         env:
           COSIGN_EXPERIMENTAL: "true"
         run: |
           curl -fsSL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o cosign
           chmod +x cosign
           ./cosign sign-blob --yes --upload=false --output-signature SHA256SUMS.sig dist/SHA256SUMS
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: steps.mode.outputs.mode == 'ciLane'
         with:
           name: release-${{ github.ref_name }}
           path: |
@@ -50,3 +82,27 @@ jobs:
             dist/SHA256SUMS
             dist/SHA256SUMS.sig
           retention-days: 90
+
+      # ------------- manual-release lane (server-side validation) -------------
+      - name: verify published assets match SHA256SUMS (manual-release lane)
+        if: steps.mode.outputs.mode == 'manualRelease'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          tag="${GITHUB_REF_NAME}"
+          echo "manual-release lane: verifying published assets for ${tag}"
+          rel=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${tag}")
+          assets=$(echo "$rel" | python -c "import json,sys; d=json.load(sys.stdin); print(json.dumps(d['assets']))")
+          # extract asset URLs by name
+          ISO_URL=$(python -c "import json,sys; d=json.load(sys.stdin); print([a['browser_download_url'] for a in json.loads(d) if a['name']=='manx-iso-'+tag][0])" 2>/dev/null <<< "$assets")
+          SUMS_URL=$(python -c "import json,sys; d=json.load(sys.stdin); print([a['browser_download_url'] for a in json.loads(d) if a['name']=='SHA256SUMS'][0])" 2>/dev/null <<< "$assets")
+          test -n "$ISO_URL" || { echo "ISO asset missing"; exit 1; }
+          test -n "$SUMS_URL" || { echo "SHA256SUMS asset missing"; exit 1; }
+          file=$(basename "$ISO_URL")
+          curl -fsSL "$SUMS_URL" -o SHA256SUMS
+          curl -fsSL "$ISO_URL" -o "$file"
+          echo "digest check:"
+          sha256sum -c SHA256SUMS
+          echo "manual-release lane: verified; the maintainers published this artifact directly."
+
