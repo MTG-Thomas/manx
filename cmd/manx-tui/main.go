@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/MTG-Thomas/manx/internal/actions"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -35,6 +36,8 @@ type viewOf struct {
 type model struct {
 	verbs  []viewOf
 	cursor int
+	gr     *actions.GateRunner
+	last   string
 }
 
 func (m model) Init() tea.Cmd { return nil }
@@ -52,6 +55,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "down", "j":
 			if m.cursor < len(m.verbs)-1 {
 				m.cursor++
+			}
+		case "enter":
+			verb := m.verbs[m.cursor].verb
+			if err := m.gr.Run(verb, nil); err != nil {
+				m.last = fmt.Sprintf("%s: %v", verb, err)
+			} else {
+				m.last = fmt.Sprintf("%s: ok", verb)
 			}
 		}
 	}
@@ -72,7 +82,10 @@ func (m model) View() string {
 		}
 		s += fmt.Sprintf("%s%-20s %s\n", cursor, v.verb, style.Render(v.help))
 	}
-	s += "\n" + helpStyle.Render("↑/↓ move · Enter run (wired to manx CLI) · q quit")
+	if m.last != "" {
+		s += "\n" + verbStyle.Render("last: "+m.last)
+	}
+	s += "\n" + helpStyle.Render("KeMove Enter run (GateRunner audit + --i-know) · q quit")
 	return s
 }
 
@@ -95,7 +108,8 @@ func main() {
 		fmt.Fprintln(os.Stderr, "not a capable tty: use `manx <action>`, or the whiptail fallback")
 		os.Exit(2)
 	}
-	if _, err := tea.NewProgram(model{verbs: initialVerbs()}).Run(); err != nil {
+	gate := actions.Default().NewAuditor(actions.DefaultAuditPath())
+	if _, err := tea.NewProgram(model{verbs: initialVerbs(), gr: gate}).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "tui error:", err)
 		os.Exit(1)
 	}

@@ -36,10 +36,16 @@ type GateRunner struct {
 // the "exactly one row per invocation" contract).
 func (g *GateRunner) Count() int { return g.w.Count() }
 
-// Run executes a verb, enforcing the --i-know gate for destructive verbs and
-// writing exactly one audit row for the invocation (refusal or success/error).
+// Run executes a verb in the CLI view (spec default); other views use RunView.
 func (g *GateRunner) Run(verb string, args []string) error {
-	row := audit.Row{Actor: "operator", View: "cli", Verb: verb}
+	return g.RunView("cli", verb, args)
+}
+
+// RunView executes a verb for a named view (cli/menu/tui/harness), enforcing
+// the --i-know gate for destructive verbs and writing exactly one audit row
+// tagged with the view that caused the invocation.
+func (g *GateRunner) RunView(view, verb string, args []string) error {
+	row := audit.Row{Actor: "operator", View: view, Verb: verb}
 
 	a, ok := g.reg.Get(verb)
 	if !ok {

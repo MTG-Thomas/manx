@@ -1,8 +1,11 @@
 # local build artifacts
 bin/
 dist/
+out/
 out.iso
 *.b64
+# compiled go binaries
+*.exe
 # cached base iso
 manx-iso/cache/
 # bridge/scratch copies

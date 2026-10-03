@@ -62,14 +62,14 @@ func Default() *Registry {
 	r := &Registry{}
 
 	// Non-destructive / inspection verbs (spec contract, non-dangerous by default).
-	must(r, Action{Verb: "status", Summary: "one-line runtime summary (net/mesh/drivers/scrash)",
-		Runs: func(args []string) error { fmt.Println("status: ok (skeleton)"); return nil }})
+	must(r, Action{Verb: "status", Summary: "one-line runtime summary (net/drivers/toolkit)",
+		Runs: runStatus})
 	must(r, Action{Verb: "detect-hw", Summary: "inventory unclaimed/missing-driver hardware",
-		Runs: func(args []string) error { fmt.Println("detect-hw: skeleton"); return nil }})
+		Runs: runDetectHW})
 	must(r, Action{Verb: "collect", Summary: "harvest logs/evtx/minidumps/hive listings (read-only)",
 		Runs: func(args []string) error { fmt.Println("collect: skeleton"); return nil }})
-	must(r, Action{Verb: "img-in", Summary: "read-only disk/volume inventory (lsblk/blkid/SMART)",
-		Runs: func(args []string) error { fmt.Println("img-in: skeleton"); return nil }})
+	must(r, Action{Verb: "img-in", Summary: "read-only disk/volume inventory (lsblk/blkid)",
+		Runs: runImgIn})
 
 	// Destructive verbs: require --i-know in every view + audit row with Danger.
 	must(r, Action{Verb: "hive-edit", Danger: true, Summary: "SAFE hive edit template (snapshot first; edit copy; stage back)",
