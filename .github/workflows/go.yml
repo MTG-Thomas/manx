@@ -10,8 +10,8 @@ jobs:
   go:
     runs-on: ubuntu-latest
     steps:
-      - actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
         with:
           go-version: stable
           cache: true
@@ -22,7 +22,7 @@ jobs:
           mkdir -p out
           GOFLAGS=-mod=mod go build -o out/manx ./cmd/manx
           GOFLAGS=-mod=mod go build -o out/manx-tui ./cmd/manx-tui
-      - actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: manx-binaries-${{ github.sha }}
           path: |
