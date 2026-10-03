@@ -1,6 +1,8 @@
 // MANX CLI: `manx <action> [args...]` is the action surface.
 // The spec's parity contract requires every view (menu, CLI, TUI, harness) to
-// express the same verbs; this file is the CLI view.
+// express the same verbs; this file is the CLI view, driving verbs through
+// internal/actions GateRunner so the audit rows and the --i-know gate are
+// enforced in exactly one place.
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 package main
@@ -11,11 +13,10 @@ import (
 	"os"
 
 	"github.com/MTG-Thomas/manx/internal/actions"
-	"github.com/MTG-Thomas/manx/internal/audit"
 )
 
 const (
-	auditPath = "/toolkit/out/audit.log" // spec: append-only, path exposed to views
+	auditPath = "/toolkit/out/audit.log" // spec: append-only, shared by every view
 )
 
 func main() {
@@ -29,59 +30,31 @@ func main() {
 	}
 
 	verb, rest := args[0], args[1:]
-	reg := actions.Default()
-	a, ok := reg.Get(verb)
-	if !ok || verb == "help" {
+	if verb == "help" {
 		usage()
 		os.Exit(2)
 	}
 
-	// Audit contract: one row per verb invocation, in every view.
-	// (CLI view: Actor is "operator" by convention; the agent harness sets its
-	// own Actor string in upstream calls.)
-	view := "cli"
-	defer func() {
-		_ = audit.Writer{Path: auditPath}.Write(audit.Row{
-			Actor: "operator", View: view, Verb: verb,
-			Danger: dangerFor(a, rest), Result: "ok",
-		})
-	}()
-
-	if a.Danger && !hasIKnow(rest) {
-		fmt.Fprintf(os.Stderr, "%s: destructive action requires --i-know in any view (spec \u00a710.8)\n", verb)
-		view = "cli"
-		_ = audit.Writer{Path: auditPath}.Write(audit.Row{
-			Actor: "operator", View: view, Verb: verb, Danger: "denied", Result: "error:refused",
-		})
-		os.Exit(1)
+	reg := actions.Default()
+	if _, ok := reg.Get(verb); !ok {
+		fmt.Fprintf(os.Stderr, "unknown action %q\n", verb)
+		usage()
+		os.Exit(2)
 	}
 
-	if err := a.Runs(rest); err != nil {
+	// Single audit path + single gate: the GateRunner refuses destructive verbs
+	// without --i-know and writes exactly one audit row for every invocation.
+	gr := reg.NewAuditor(auditPath)
+	if err := gr.Run(verb, rest); err != nil {
 		fmt.Fprintf(os.Stderr, "%s: %v\n", verb, err)
 		os.Exit(1)
 	}
 }
 
-func hasIKnow(args []string) bool {
-	for _, a := range args {
-		if a == "--i-know" {
-			return true
-		}
-	}
-	return false
-}
-
-func dangerFor(a actions.Action, args []string) string {
-	if a.Danger && hasIKnow(args) {
-		return "i-know"
-	}
-	return ""
-}
-
 func usage() {
 	fmt.Fprintln(os.Stderr, "usage: manx <action> [args...]")
 	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "actions (spec \u00a710.8 parity contract):")
+	fmt.Fprintln(os.Stderr, "actions (spec §10.8 parity contract):")
 	for _, a := range actions.Default().List() {
 		marker := ""
 		if a.Danger {

@@ -12,11 +12,20 @@ import "fmt"
 // Action is one spec-contract verb. Destructive verbs must require an explicit
 // `--i-know` in every view, and must write an audit.Row with Danger set.
 type Action struct {
-	Verb    string   // e.g. "status"
-	Args    []string // display of accepted args/flags
-	Danger  bool     // destructive? (requires --i-know)
-	Runs    func(args []string) error
-	Summary string // one-line help shown in menu/TUI/CLI help
+	Verb    string                    // e.g. "status"
+	Args    []string                  // display of accepted args/flags
+	Danger  bool                      // destructive? (requires --i-know)
+	Runs    func(args []string) error // body; kept for CLI direct-call compatibility
+	Summary string                    // one-line help shown in menu/TUUI/CLI help
+}
+
+// body aliases Runs so the GateRunner can dispatch destructively-refused calls
+// (kept as a distinct field name for readability at the call site).
+func (a Action) body(args []string) error {
+	if a.Runs == nil {
+		return fmt.Errorf("%s: body is nil (spec §10.8 parity contract)", a.Verb)
+	}
+	return a.Runs(args)
 }
 
 // Registry is the ordered set of spec-contract actions. The spec is authoritative

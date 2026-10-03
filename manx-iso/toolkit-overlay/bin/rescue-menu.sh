@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 set -eu
 OUT=/toolkit/out; mkdir -p "$OUT"
-AUDIT=/toolkit/out/audit.log
 
 banner() {
   echo "MANX rescue menu"
@@ -55,10 +54,20 @@ shell             drop to a rescue bash under the supervisor
 NAV
 )
 
+# build the whiptail menu args from the verb list, one entry at a time
+# (deliberately word-split-tagged: the loop-controlled construction is the point)
+MENU_ARGS=""
+while IFS= read -r line_entry; do
+  verb_name=$(printf '%s' "$line_entry" | awk '{print $1}')
+  verb_help=$(printf '%s' "$line_entry" | cut -d' ' -f2-)
+  MENU_ARGS="$MENU_ARGS \"$(printf '%s' "$verb_name")\" \"$(printf '%s' "$verb_help")\""
+done <<EOF
+$MENU_LIST
+EOF
+# shellcheck disable=SC2086  # we control the quoting of MENU_ARGS construction
 while true; do
   banner
-  SEL=$(whiptail --title "MANX rescue menu" --menu "Pick an action (spec §10.8)" 24 78 16 \
-    $(echo "$MENU_LIST" | awk '{print NR" "$1}' | tr '\n' '"' | sed 's/"/  /g;s/^/"/;s/ /"$/' ) 3>&1 1>&2 2>&3)
+  SEL=$(eval whiptail --title '"MANX rescue menu"' --menu '"Pick an action (spec §10.8)"' 24 78 16 $MENU_ARGS 3>&1 1>&2 2>&3)
   rc=$?
   [ $rc -ne 0 ] && whiptail --msgbox "Quitting the menu drops to the rescue shell. Type 'menu' to return." 10 50 && break
   case "$SEL" in

@@ -25,9 +25,25 @@ type Row struct {
 }
 
 // Writer appends Rows to a file. The file must not be required to exist before
-// first write; the path must not be a symlink (spec: append-only intent).
+// first write; the parent dir must already exist.
 type Writer struct {
 	Path string
+}
+
+// Count returns the number of complete audit rows currently in the file
+// (used by the parity-contract tests).
+func (w Writer) Count() int {
+	b, err := os.ReadFile(w.Path)
+	if err != nil {
+		return 0
+	}
+	n := 0
+	for _, ln := range b {
+		if ln == '\n' {
+			n++
+		}
+	}
+	return n
 }
 
 func (w Writer) Write(r Row) error {
