@@ -1,0 +1,40 @@
+SSH-IN-OK
+sysrescue
+setup ok at 2026-10-03T18:15:50Z (bash autorun)
+Warning: Permanently added '172.16.15.171' (ED25519) to the list of known hosts.
+MANX status
+  host:      sysrescue
+  kernel:    6.18.34-1-lts
+  toolkit:   present (/toolkit)
+  net:       1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+  uptime:    129.78 seconds
+  audit rows: 0
+collected 4 targets into /toolkit/out/collect-2026-10-03T18:17:43Z.tar.gz
+/var/log
+  /etc/fstab
+  /proc/mounts
+  /etc/hosts
+total 232
+drwxr-xr-x 2 root root     80 Oct  3 18:17 .
+drwxr-xr-x 5 root root    140 Oct  3 18:15 ..
+-rw------- 1 root root    261 Oct  3 18:17 audit.log
+-rw-r--r-- 1 root root 232914 Oct  3 18:17 collect-2026-10-03T18:17:43Z.tar.gz
+flag provided but not defined: -list-actions
+usage: manx <action> [args...]
+
+actions (spec Â§10.8 parity contract):
+  status               one-line runtime summary (net/drivers/toolkit)
+  detect-hw            inventory unclaimed/missing-driver hardware
+  collect              harvest OS + rescue logs into a tar.gz (read-only)
+  setup                stage /toolkit from the boot media (first-boot; idempotent)
+  img-in               read-only disk/volume inventory (lsblk/blkid)
+  hive-edit            SAFE hive edit template (snapshot first; edit copy; stage back) [requires --i-know]
+  img-out              image a volume/partition to a file (ntfsclone/partclone/ddrescue) [requires --i-know]
+  bootstrap-drivers    runtime driver fetch ladder (L1 local/L2 distro/L3 vendor/L4 report) [requires --i-know]
+  bringup-windows-vm   qemu/OVMF bringup of a Windows guest against an attached disk [requires --i-know]
+{"ts":"2026-10-03T18:17:42.645879687Z","actor":"operator","view":"cli","verb":"status","danger":"","result":"ok","detail_oid":""}
+{"ts":"2026-10-03T18:17:43.230808163Z","actor":"operator","view":"cli","verb":"collect","danger":"","result":"ok","detail_oid":""}
+img-out: destructive action requires --i-know in any view (spec Â§10.8)
+rc=1
+setup: staging /run/archiso/bootmnt/manx/toolkit/bin: open /toolkit/bin/manx: text file busy
+4 /toolkit/out/audit.log
