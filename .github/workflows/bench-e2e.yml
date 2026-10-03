@@ -1,5 +1,14 @@
 name: bench-e2e
-# OPT-IN ONLY lane: e2e boot/acceptance of a built ISO on MTG-owned bench hardware.
+# OPT-IN ONLY lane: e2e boot/acceptance of a built ISO on *MTG-owned* bench hardware.
+#
+# POLICY (hard rule, not a preference):
+#   Bench testing runs on MTG-infrastructure ONLY. Never on customer or
+#   customer-site equipment (that includes any device at a customer site, on a
+#   customer LAN, or reachable through customer-managed virtualization), because
+#   a public repo's opt-in self-hosted job must never carry agent code onto some-
+#   one else's compute. The bench runner self-identifies with a label registered
+#   by us, on hardware we own, on a network we control, with a MTG-scoped ID.
+#
 # Guardrails (public repo, self-hosted runner):
 #   - NO pull_request trigger ever; dispatch only (org member, bench environment
 #     protection requires a reviewer before the self-hosted runner starts)

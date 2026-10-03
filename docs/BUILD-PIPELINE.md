@@ -58,7 +58,25 @@ than binding because "the bench Dell was free today" is not a promise we can enc
 
 ## Bench lane on our infra
 
-`bench-e2e.yml` is the opt-in path for e2e testing on MTG-hosted hardware:
+`bench-e2e.yml` is the opt-in path for e2e testing on **MTG-owned** hardware:
+
+- **Rule zero — never customer hardware.** Bench testing is performed on
+  equipment MTG owns and operates, on networks MTG controls. A customer's
+  server, customer LAN, or anything at a customer site is out of bounds for
+  this lane, regardless of convenience: a public repo's opt-in self-hosted
+  job must never place agent code on someone else's compute.
+- **Runner identity is org-scoped.** The `manx-bench` runner is registered from
+  a MTG-owned device/VM (e.g. a bench box on the office LAN or a lab VM), with
+  a label `self-hosted, manx-bench`, and a runner registration scoped to this
+  repository only (`actions:read` on MTG-Thomas/manx for sibling artifacts).
+- All customer-confidential identifiers (specific sites, IPs, hostnames,
+  accounts) never appear in this repository — they live in the runner's local
+  profile, and the acceptance checksums they produce are generic artifacts.
+- The runner is audited per §10.5 security-model row: what a bench run
+  executed, what disks it touched, and whether the boot result was
+  1. bootable, 2. net-up, 3. detect-hw clean — written back as a bench
+  summary artifact (no customer data, no secrets).
+
 
 - **Trigger**: `workflow_dispatch` with the build run id (`inputs.run_id`) of the
   artifact to test, chosen by the operator. Dispatching is available only to
