@@ -1,76 +1,66 @@
 name: bench-e2e
 # OPT-IN ONLY lane: e2e boot/acceptance of a built ISO on MTG-owned bench hardware.
 # Guardrails (public repo, self-hosted runner):
-#   - NO pull_request trigger ever; dispatch only (org members, bench environment,
-#     reviewer-confirmed before the runner starts)
-#   - inputs carry the upstream build run id; the runner never builds from source,
-#     it consumes a published artifact manifest
-#   - runner output goes to the workflow summary; failure annotates but does not
-#     gate or delete anything (publish remains the human's action)
+#   - NO pull_request trigger ever; dispatch only (org member, bench environment
+#     protection requires a reviewer before the self-hosted runner starts)
+#   - inputs carry the upstream build run id; the runner consumes that artifact
+#     set only (build stays in the CI lane; this is validation, not building)
+#   - runner output goes to the workflow summary; a bench failure is advisory and
+#     never gates or deletes anything
 on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: GitHub run id of the iso-linux build to fetch artifacts from
+        description: GitHub run id of the iso-linux build to boot-test
         required: true
-        type: string
       test_set:
-        description: which acceptance set (8b.6 | 10.7 | 10.8), default all
+        description: "acceptance set: 8b.6 | 10.7 | 10.8 (default: all)"
         required: false
-        type: choice
         default: all
-        options: [all, "8b.6", "10.7", "10.8"]
 
 permissions:
   contents: read
 
-environment:
-  name: bench           # protection: required reviewer confirmation on dispatch
-  url: ""
-
 jobs:
   bench:
     runs-on: [self-hosted, manx-bench]
+    environment: bench
     steps:
       - name: scope guard (never trust inputs to build code here)
         run: |
-          set -e
           echo "runner: $(uname -a)" >> "$GITHUB_STEP_SUMMARY"
           echo "This bench boot-tests the artifact set produced by run ${{ inputs.run_id }}."
           echo "It does NOT compile code; a validation-only lane."
-      - uses: actions/download-artifact@v4
-        with:
-          name: manx-iso-output
-          path: dist/artifacts
-      - name: locate iso artifact from run ${{ inputs.run_id }}
+
+      - name: lock to the referenced artifact set
         run: |
           set -e
-          # Local helper (bench-side, in the runner profile) fetches the *artifact* set
-          # from the referenced run; requires a runner-scoped token with
-          # actions:read on this repo only (least-privilege), and refuses artifacts
-          # not produced by this repo.
-          ISO=$(dist/artifacts/out.iso)
-          test -f "$ISO" || { echo "ISO not present in fetched artifacts" ; exit 1 ; }
-          sha256sum "$ISO" >> "$GITHUB_STEP_SUMMARY"
-      - name: pair for boot
-        # bench-side script (in the runner profile, not this repo): attaches the ISO
-        # as virtual media on the bench Dell via iDRAC web console; one-time boot
-        # to the virtual CD; captures the boot outcome + the kernel's own net-up
-        # output into the step summary; it never collects secrets from the host.
+          # bench-side helper (runner profile, NOT this repo) fetches the artifact
+          # set produced by run ${{ inputs.run_id }}; the runner token is scoped to
+          # actions:read on MTG-Thomas/manx only (least privilege).
+          # It lands artifacts under $RUNNER_TEMP (ephemeral); never /toolkit.
+          manx-bench-fetch "${{ inputs.run_id }}"
+          test -f "$RUNNER_TEMP/manx-iso/out.iso" || { echo "ISO not fetched"; exit 1; }
+          sha256sum "$RUNNER_TEMP/manx-iso/out.iso" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: boot-test per spec (delegated, least-privilege bench script)
         run: |
-          set -e
+          # owned by the bench profile (/opt/manx-bench/boot-test.sh): attaches the ISO as
+          # virtual media on the bench Dell (iDRAC), one-time boot to virtual CD, captures
+          # net-up + detect-hw output, writes bench-summary for the workflow summary.
           sudo /opt/manx-bench/boot-test.sh \
-            --iso "$(ls dist/artifacts/out.iso | head -1)" \
-            --set "${{ inputs.test_set }}" \
+            --iso "$RUNNER_TEMP/manx-iso/out.iso" \
+            --set "${{ inputs.test_set || 'all' }}" \
             2>&1 | tee bench-summary.md
           cp bench-summary.md "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+
       - name: record outcome (advisory)
         if: always()
         run: |
           {
             echo "## bench result"
             echo ""
-            echo "run: [${{ inputs.run_id }}] pattern: ${{ inputs.test_set }}"
+            echo "run: [${{ inputs.run_id }}] set: ${{ inputs.test_set }}"
             echo ""
             tail -50 bench-summary.md 2>/dev/null || echo "(no summary captured)"
           } >> "$GITHUB_STEP_SUMMARY"
