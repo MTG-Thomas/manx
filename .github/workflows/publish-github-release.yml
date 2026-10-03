@@ -1,0 +1,33 @@
+name: publish-github-release
+# Runs AFTER dry-run-release greens on a tag; creates the GitHub Release with
+# immutable assets (never re-uploaded — a fix means a new tag).
+on:
+  workflow_run:
+    workflows: ["dry-run-release"]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  publish:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ github.event.workflow_run.head_branch }}
+          path: dist
+      - name: release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/out.iso
+            dist/SHA256SUMS
+            dist/SHA256SUMS.sig
+          generate_release_notes: true
+          body: |
+            **Verify**: `sha256sum -c SHA256SUMS` then `cosign verify --key manx-release.pub SHA256SUMS`
+            Bench acceptance per docs/rescue/MANX-SPEC.md §8b.6 + §10.7/§10.8 sets.
+            See SECURE-BOOT.md for the trust chain (no MOK enrollment required for the standard boot).

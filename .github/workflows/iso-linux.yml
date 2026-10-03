@@ -1,0 +1,75 @@
+name: iso-linux
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: bench-candidate reason (record for the release decision)
+        required: false
+        default: "manual bench-candidate build"
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+
+jobs:
+  iso-linux:
+    # container is the pinned-debian builder; digest pinning is a first-release gate
+    # (see docs/BUILD-PIPELINE.md). The dpkg -l snapshot ships in the artifact.
+    runs-on: ubuntu-latest
+    container:
+      image: debian:bookworm-slim
+      options: --memory 6g
+    steps:
+      - name: install builder deps
+        run: |
+          set -e
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates curl jq wget dehash sum \
+            xorriso genisoimage syslinux-utils \
+            live-build squashfs-tools wimtools \
+            dosfstools mtools parted file \
+            overlayfs-tools 2>/dev/null || true
+          # overlayfs-tools is optional; the pinned core set is above
+          rm -f /var/lib/apt/lists/lock
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: manx-binaries-${{ github.sha }}
+          path: dist/bin
+      - name: cache base iso
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/base
+          key: sysrescue-${{ hashFiles('manx-iso/build/BASE-URL.sha256') }}
+      - name: fetch base iso (SystemRescue)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          mkdir -p /tmp/base
+          url=$(cat manx-iso/build/BASE-URL.sha256 | head -1)
+          expected=$(cat manx-iso/build/BASE-URL.sha256 | tail -1)
+          curl -L --retry 3 -o /tmp/base/sysrescue.iso "$url"
+          echo "$expected  /tmp/base/sysrescue.iso" | sha256sum -c -
+      - name: remaster
+        run: |
+          set -e
+          chmod +x dist/bin/manx dist/bin/manx-tui
+          bash manx-iso/build/build-remaster.sh /tmp/base/sysrescue.iso manx-iso/toolkit-overlay dist out.iso manx
+      - name: manifest + artifact
+        run: |
+          set -e
+          dpkg -l > dist/pkgs-dpkg-list.txt
+          mkdir -p dist
+          cd dist
+          sha256sum out.iso manx manx-tui > SHA256SUMS.parts
+          cp /tmp/base/*.txt PKGS-INFO.txt 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manx-iso-${{ github.ref_name }}
+          path: |
+            dist/out.iso
+            dist/SHA256SUMS.parts
+            dist/pkgs-dpkg-list.txt
+          retention-days: 90

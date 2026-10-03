@@ -1,0 +1,27 @@
+name: iso-winpe
+# optional WinPE lane: built from LINUX via wimlib (spec §11.8) - no Windows runner.
+# Disabled by default; enable per-release once the linux remaster lane is stable.
+# The payload is the ADK-generated boot.wim staged into manx-iso/winpe/ (not in git).
+on:
+  workflow_dispatch:
+    inputs:
+      bootwim_path:
+        description: path (inside repo tree) to a checked-in boot.wim artifact reference
+        required: false
+        default: ""
+jobs:
+  iso-winpe:
+    if: false   # enable manually per release; lane documented but not autowired
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install wim tools
+        run: |
+          sudo apt-get update && sudo apt-get install -y wimtools
+      - name: assemble winpe payload
+        run: |
+          # Boot strategy: wimlib-imagex apply the ADK boot.wim, overlay \Tools + startnet.cmd
+          # from manx-iso/winpe-tools-overlay/, then wimlib capture; xorriso wraps into a
+          # dual-mode ISO alongside the linux entry (spec §8b.4).
+          echo "winpe lane is documented in docs/BUILD-PIPELINE.md; implement on first release"
+          exit 1

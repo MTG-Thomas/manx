@@ -1,0 +1,31 @@
+name: go
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request: {}
+permissions:
+  contents: read
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: true
+      - name: make check
+        run: make check
+      - name: build binaries
+        run: |
+          mkdir -p out
+          GOFLAGS=-mod=mod go build -o out/manx ./cmd/manx
+          GOFLAGS=-mod=mod go build -o out/manx-tui ./cmd/manx-tui
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manx-binaries-${{ github.sha }}
+          path: |
+            out/manx
+            out/manx-tui
+          retention-days: 30
