@@ -7,3 +7,7 @@ out.iso
 manx-iso/cache/
 # bridge/scratch copies
 *.tmp
+
+# release artifacts never in git (GH 100MB limit; releases live on GH Releases only)
+*.iso
+release-*/
