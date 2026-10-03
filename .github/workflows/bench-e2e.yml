@@ -19,7 +19,7 @@ on:
         required: false
         type: choice
         default: all
-        options: [all, 8b.6, 10.7, 10.8]
+        options: [all, "8b.6", "10.7", "10.8"]
 
 permissions:
   contents: read
