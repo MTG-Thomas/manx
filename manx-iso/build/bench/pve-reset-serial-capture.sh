@@ -1,0 +1,3 @@
+# start serial capture now (before the reset, so we don't miss the banner), run in
+# the background on the pve host with nohup; then we reset the VM, wait, and read the report.
+ssh -o BatchMode=yes -i C:\Users\ThomasBray\.ssh\proxmox-root-id_rsa root@172.16.15.128 "pct exec 119 -- cat /opt/manx-build/manx-bench-iso-v0.0.1.iso > /var/lib/vz/template/iso/manx-bench-iso-v0.0.1.iso; sha256sum /var/lib/vz/template/iso/manx-bench-iso-v0.0.1.iso; nohup bash -c 'timeout 240 socat -u UNIX-CONNECT:/var/run/qemu-server/120.serial0 RECV:/tmp/manx-bench-serial.txt 2>/dev/null' > /tmp/socat-serial.out 2>&1 & echo socat-started; qm set 120 --ide2 local:iso/manx-bench-iso-v0.0.1.iso,media=cdrom; qm reset 120; echo reset-sent" 2>&1 | Select-Object -First 6

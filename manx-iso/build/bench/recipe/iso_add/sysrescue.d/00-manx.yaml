@@ -1,0 +1,12 @@
+---
+# MANX bench-only boot config for the SystemRescue rescue ISO.
+# SYSTEMRESCUE-OFFICIAL features only (YAML sysrescue.d scope). No scripts.
+# The authorized-key is a PUBLIC half of the MTG operator key (not a secret).
+# nofirewall is BENCH-ONLY (never in the released ISO): the bench VM allows SSH
+# from the MTG operator workstation on the MTG network; the *published* release
+# ISO keeps the SystemRescue firewall ON (default).
+global:
+    nofirewall: true
+sysconfig:
+    authorized_keys:
+        "thomas@midtowntg.com": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFYFscSweP+p+d4tGfe4UecO73Ttbf+DrbEiKnczJ9KL thomas@midtowntg.com"
