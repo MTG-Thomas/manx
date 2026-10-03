@@ -1,0 +1,22 @@
+ ==================================================
+    MANX  ·  rescue kit purring at your service
+ ==================================================
+            /\_/\
+           ( o.o )
+     meow <  >  ->  one tool, three views, zero panic
+
+ --- Incident-response truths (learned expensively) -------------------------
+  1. Breathe. Snapshot. Then act. In that order.
+  2. `manx status` BEFORE anything else: know the box.
+  3. Collect evidence before repairing the patient.
+  4. Write down what you did BEFORE you do it. Future-you is a witness.
+  5. The backup you have not restore-tested is a rumor.
+  6. Two changes at once = two suspects.
+  7. Destructive verb? Read it twice, then --i-know.
+  8. Correlated failure at a fixed cadence? Look for a ticker, not a ghost.
+ --- Human truths ------------------------------------------------------------
+  * You are not a machine. Drink water. Stretch. soon.
+  * Tired eyes reboot zero servers. Take the break.
+  * The snarky one-liner can wait until the practice is back online.
+ ============================================================================
+
