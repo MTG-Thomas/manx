@@ -1,4 +1,4 @@
-# MANX repo maturity — implemented state (2026-10-03)
+﻿# MANX repo maturity â€” implemented state (2026-10-03)
 
 | Maturity piece | Where | State |
 |---|---|---|
@@ -8,7 +8,7 @@
 | CodeQL (security-extended, weekly) | `.github/workflows/codeql.yml` | done, pinned SHAs |
 | Security parity: govulncheck | workflow | done |
 | Actions SHA-pinning tool + applied | `.github/pin-actions.py` | done |
-| Branch protection `main`: 1 approval, status checks go/govulncheck/CodeQL, dismiss stale, no force push | branch ruleset | done (admin-enforced) |
+| Branch protection `main`: status checks go/govulncheck/CodeQL required on PRs, force-push/deletions blocked; `enforce_admins` intentionally off (solo maintainer) and PR-review requirement intentionally absent (no second reviewer; documented tradeoff) | branch ruleset | done |
 | Release pipeline (tag -> dry-run -> publish) | `dry-run-release.yml` + `publish-github-release.yml` | done, two modes: CI lane & manual lane |
 | ISO builder CI lane | `iso-linux.yml` | wired (containerized Debian; needs 1st bench confirmation to tag) |
 | Bench lane (self-hosted runner) | `bench-e2e.yml` | wired, offline until an MTG bench runner is registered |
