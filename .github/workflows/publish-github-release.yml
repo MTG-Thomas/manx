@@ -28,6 +28,7 @@ jobs:
             dist/SHA256SUMS.sig
           generate_release_notes: true
           body: |
-            **Verify**: `sha256sum -c SHA256SUMS` then `cosign verify --key manx-release.pub SHA256SUMS`
+            Verify: `sha256sum -c SHA256SUMS`, then keyless cosign
+            `verify-blob` with `SHA256SUMS.sigstore.json` (README "Verifying a release").
             Bench acceptance per docs/rescue/MANX-SPEC.md Â§8b.6 + Â§10.7/Â§10.8 sets.
             See SECURE-BOOT.md for the trust chain (no MOK enrollment required for the standard boot).

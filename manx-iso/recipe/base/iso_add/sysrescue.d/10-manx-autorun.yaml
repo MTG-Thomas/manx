@@ -1,0 +1,16 @@
+---
+# MANX first-boot toolkit staging (base + bench variants).
+#
+# Why YAML-config autorun: SystemRescue's NAME-based autorun only executes
+# scripts whose filenames BEGIN with "autorun" (autorun0..autorunF). Our
+# 00-manx-setup.sh inside autorun/ was therefore silently skipped at boot
+# (v0.0.1/v0.0.2 needed a manual `bash 00-manx-setup.sh` kick). The YAML
+# `exec` entries (SystemRescue >= 9.05) run explicit paths and are the
+# documented, versioned mechanism. See
+# https://www.system-rescue.org/manual/Run_your_own_scripts_with_autorun/
+autorun:
+    exec:
+        100:
+            path: "/run/archiso/bootmnt/autorun/00-manx-setup.sh"
+            wait: never
+            on_error: continue

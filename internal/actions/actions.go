@@ -66,8 +66,10 @@ func Default() *Registry {
 		Runs: runStatus})
 	must(r, Action{Verb: "detect-hw", Summary: "inventory unclaimed/missing-driver hardware",
 		Runs: runDetectHW})
-	must(r, Action{Verb: "collect", Summary: "harvest logs/evtx/minidumps/hive listings (read-only)",
-		Runs: func(args []string) error { fmt.Println("collect: skeleton"); return nil }})
+	must(r, Action{Verb: "collect", Summary: "harvest OS + rescue logs into a tar.gz (read-only)",
+		Runs: runCollect})
+	must(r, Action{Verb: "setup", Summary: "stage /toolkit from the boot media (first-boot; idempotent)",
+		Runs: runSetup})
 	must(r, Action{Verb: "img-in", Summary: "read-only disk/volume inventory (lsblk/blkid)",
 		Runs: runImgIn})
 

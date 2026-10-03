@@ -14,3 +14,5 @@ manx-iso/cache/
 # release artifacts never in git (GH 100MB limit; releases live on GH Releases only)
 *.iso
 release-*/
+# raw console screendumps (bench evidence kept as small *.png only)
+*.ppm

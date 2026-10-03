@@ -9,25 +9,8 @@ import (
 	"testing"
 )
 
-// SPEC_VERBS: the parity contract in docs/rescue/MANX-SPEC.md §10.8.
-// This list locks the registry to exactly these verbs, in this order.
-var SPEC_VERBS = []string{
-	"status",
-	"detect-hw",
-	"collect",
-	"img-in",
-	"hive-edit",
-	"img-out",
-	"bootstrap-drivers",
-	"bringup-windows-vm",
-}
-
-var SPEC_DESTRUCTIVE = map[string]bool{
-	"img-out":            true,
-	"hive-edit":          true,
-	"bootstrap-drivers":  true,
-	"bringup-windows-vm": true,
-}
+// The parity lists live in parity.go (single source; shared with non-test code).
+// (SPEC_VERBS / SPEC_DESTRUCTIVE defined there.)
 
 func TestParity(t *testing.T) {
 	r := Default()
