@@ -12,11 +12,11 @@ import "fmt"
 // Action is one spec-contract verb. Destructive verbs must require an explicit
 // `--i-know` in every view, and must write an audit.Row with Danger set.
 type Action struct {
-	Verb     string   // e.g. "status"
-	Args     []string // display of accepted args/flags
-	Danger   bool     // destructive? (requires --i-know)
-	Runs     func(args []string) error
-	Summary  string   // one-line help shown in menu/TUI/CLI help
+	Verb    string   // e.g. "status"
+	Args    []string // display of accepted args/flags
+	Danger  bool     // destructive? (requires --i-know)
+	Runs    func(args []string) error
+	Summary string // one-line help shown in menu/TUI/CLI help
 }
 
 // Registry is the ordered set of spec-contract actions. The spec is authoritative
@@ -54,13 +54,13 @@ func Default() *Registry {
 
 	// Non-destructive / inspection verbs (spec contract, non-dangerous by default).
 	must(r, Action{Verb: "status", Summary: "one-line runtime summary (net/mesh/drivers/scrash)",
-		Runs: func(args []string) error { fmt.Println("status: ok (skeleton)") ; return nil }})
+		Runs: func(args []string) error { fmt.Println("status: ok (skeleton)"); return nil }})
 	must(r, Action{Verb: "detect-hw", Summary: "inventory unclaimed/missing-driver hardware",
-		Runs: func(args []string) error { fmt.Println("detect-hw: skeleton")     ; return nil }})
+		Runs: func(args []string) error { fmt.Println("detect-hw: skeleton"); return nil }})
 	must(r, Action{Verb: "collect", Summary: "harvest logs/evtx/minidumps/hive listings (read-only)",
-		Runs: func(args []string) error { fmt.Println("collect: skeleton")       ; return nil }})
+		Runs: func(args []string) error { fmt.Println("collect: skeleton"); return nil }})
 	must(r, Action{Verb: "img-in", Summary: "read-only disk/volume inventory (lsblk/blkid/SMART)",
-		Runs: func(args []string) error { fmt.Println("img-in: skeleton")        ; return nil }})
+		Runs: func(args []string) error { fmt.Println("img-in: skeleton"); return nil }})
 
 	// Destructive verbs: require --i-know in every view + audit row with Danger.
 	must(r, Action{Verb: "hive-edit", Danger: true, Summary: "SAFE hive edit template (snapshot first; edit copy; stage back)",
@@ -75,7 +75,9 @@ func Default() *Registry {
 	return r
 }
 
-func notImpl(verb string) error { return fmt.Errorf("%s: not implemented (spec §10.8 parity contract)", verb) }
+func notImpl(verb string) error {
+	return fmt.Errorf("%s: not implemented (spec §10.8 parity contract)", verb)
+}
 
 func must(r *Registry, a Action) {
 	if err := r.Add(a); err != nil {
