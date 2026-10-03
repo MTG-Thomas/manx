@@ -1,0 +1,9 @@
+# local build artifacts
+bin/
+dist/
+out.iso
+*.b64
+# cached base iso
+manx-iso/cache/
+# bridge/scratch copies
+*.tmp

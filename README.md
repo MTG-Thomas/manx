@@ -46,6 +46,13 @@ make build  # compile bin/manx and bin/manx-tui (GOOS/GOARCH aware)
 Targets are `Makefile`-driven; CI runs `make check`. Bench/vet/go-scan gates are the same
 shape as [`MTG-Thomas/codex-swarm`](https://github.com/MTG-Thomas/codex-swarm).
 
+Next docs worth reading before you work on this repo:
+
+- [`docs/BUILD-PIPELINE.md`](docs/BUILD-PIPELINE.md) - jobs, triggers, self-hosted bench
+  guardrails, reproducibility scope, and the "publish vs bench" split.
+- [`docs/SECURE-BOOT.md`](docs/SECURE-BOOT.md) - the signed-distro model.
+- [`manx-iso/build/README.md`](manx-iso/build/README.md) - how the ISO remaster is built.
+
 ## License
 
 **AGPL-3.0-or-later** (see [`LICENSE`](LICENSE)). Any agent harness or rescue node reachable
