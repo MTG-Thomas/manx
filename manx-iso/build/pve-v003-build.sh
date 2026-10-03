@@ -5,20 +5,18 @@ set -euo pipefail
 # pve iso storage. Payloads (binaries, MOTD, autorun scripts, recipe YAMLs)
 # arrive from the operator workstation over scp into /tmp/manx-v003/.
 set -x
-RECIPE=/opt/manx-build/recipe
-BREC=/opt/manx-build/recipe-bench
 
 # 1. binaries (rebuilt from merged main)
 pct push 119 /tmp/manx-v003/manx /opt/manx-build/bin/manx --perms 0755
 pct push 119 /tmp/manx-v003/manx-tui /opt/manx-build/bin/manx-tui --perms 0755
 pct exec 119 -- bash -c '
 set -e
-for R in '"$RECIPE"' '"$BREC"'; do
+for R in /opt/manx-build/recipe /opt/manx-build/recipe-bench; do
   cp -f /opt/manx-build/bin/manx     "$R"/iso_add/manx/toolkit/bin/manx
   cp -f /opt/manx-build/bin/manx-tui "$R"/iso_add/manx/toolkit/bin/manx-tui
   chmod 755 "$R"/iso_add/manx/toolkit/bin/*
 done
-sha256sum '"$RECIPE"'/iso_add/manx/toolkit/bin/manx '"$BREC"'/iso_add/manx/toolkit/bin/manx
+sha256sum /opt/manx-build/recipe/iso_add/manx/toolkit/bin/manx /opt/manx-build/recipe-bench/iso_add/manx/toolkit/bin/manx
 '
 
 # 2. overlays + recipe YAMLs (canonical trees now live in-repo)
