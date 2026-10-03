@@ -20,6 +20,9 @@ LOG=/var/log/manx-setup.log
     if [ -x "$DST/bin/manx" ]; then
       export PATH="$DST/bin:$PATH"
       chmod +x "$DST/bin/"*
+      # first-boot marker (same file the Go `manx setup` verb writes) so the
+      # bench + status can tell "setup ran" from "setup was never invoked"
+      echo "setup ok at $(date -u +%FT%TZ) (bash autorun)" > "$DST/.setup-complete" 2>/dev/null || true
       echo "MANX toolkit ready at /toolkit (menu: whiptail $DST/manx-iso-overlay/rescue-menu.sh, CLI: manx <verb>)"
       # motd: incident-response truths + creature care, on console and /etc/motd
       if [ -f "$DST/MOTD.txt" ]; then
@@ -31,7 +34,7 @@ LOG=/var/log/manx-setup.log
           echo "test -f /etc/manx-motd && cat /etc/manx-motd" >> /root/.bashrc
       fi
     else
-      echo "manx binaary missing from live layer; menu script still at $DST/manx-iso-overlay/"
+      echo "manx binary missing from live layer; menu script still at $DST/manx-iso-overlay/"
     fi
   else
     echo "manx dir not found on boot media at $SRC"
