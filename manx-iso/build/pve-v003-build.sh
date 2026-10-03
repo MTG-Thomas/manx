@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016  # single-quoted pct exec payloads expand on the CT, not here
 set -euo pipefail
 # pve-level v0.0.3 build cycle: stage fresh binaries + overlays + recipe YAML
 # into CT 119's recipe dirs, build base + bench ISOs, verify hashes, publish to
