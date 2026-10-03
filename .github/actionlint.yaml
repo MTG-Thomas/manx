@@ -1,0 +1,5 @@
+# Bridge the actionlint runner-label check with our self-hosted bench runner.
+# (label declared here so the bench-e2e lane passes the custom-label check)
+self-hosted-runner:
+  labels:
+    - manx-bench
