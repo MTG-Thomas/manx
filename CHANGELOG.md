@@ -23,6 +23,14 @@ All notable changes to MANX are documented here (Keep a Changelog, semver from v
 
 ## [Unreleased]
 
+### Added
+- `docs/runbooks/`: agent-first operating card + bootloop-triage ladder +
+  Cove-restore-lane + qemu-guest disk-surgery walk-throughs — machine-structured
+  (flat front-matter: title/triggers/first-verbs/spec), CI-locked: a runbook may
+  only lead with verbs that exist in the registry (`TestRunbookFrontMatter`).
+- Spec: `harness-up` added to the parity verb list (§10.3 bootstrap of an
+  on-box agent harness; runner.choice pending operator decision).
+
 ## [0.0.3] - 2026-10-03
 
 ### Added
