@@ -109,39 +109,70 @@ func composeStatus(host, kernel, netLine, uptime string, auditRows int, toolkit 
 // runStatus implements `manx status` with real data (Linux-tested; degrades on
 // other OSes rather than lying about a rescue environment).
 func runStatus(args []string) error {
-	host, _ := os.Hostname()
-	kernel := runtime.GOOS
-	netLine := "no IPv4 address found"
+	s := StatusSnapshot()
+	fmt.Print(composeStatus(s.Host, s.Kernel, s.Net, s.Uptime, s.AuditRows, s.Toolkit))
+	return nil
+}
+
+// StatusSnapshot gathers the observed values the `status` verb renders.
+// The verb prints them and exits; the TUI's live strip re-reads and re-renders
+// them (display refresh is a render, not an action — no audit row).
+// Pure data gathering; each field is best-effort per platform.
+type StatusData struct {
+	Host      string
+	Kernel    string
+	Net       string // full first-INET line exactly as `ip -o -4` printed it
+	NetShort  string // "iface cidr" for compact strips
+	Uptime    string
+	AuditRows int
+	Toolkit   bool
+}
+
+func StatusSnapshot() StatusData {
+	s := StatusData{
+		Kernel: runtime.GOOS,
+		Net:    "no IPv4 address found",
+		Uptime: "unknown",
+	}
+	if h, err := os.Hostname(); err == nil {
+		s.Host = h
+	}
 	if onLinux() {
-		out, err := os.ReadFile("/proc/net/route") // presence check; details via /sys
-		_ = out
-		_ = err
 		if o, e := ExecCommand("ip", "-o", "-4", "addr", "show").Output(); e == nil {
+			firstInet := ""
 			for _, l := range strings.Split(string(o), "\n") {
 				if strings.Contains(l, "inet") {
-					netLine = strings.TrimSpace(l)
-					break
+					if firstInet == "" {
+						firstInet = strings.TrimSpace(l)
+					}
+					// prefer a non-loopback INET: "lo" is never the useful answer
+					if !strings.HasPrefix(strings.TrimSpace(strings.SplitN(l, " ", 2)[1]), "lo ") {
+						s.Net = strings.TrimSpace(l)
+						if f := strings.Fields(l); len(f) > 3 && f[2] == "inet" {
+							s.NetShort = f[1] + " " + f[3]
+						}
+						break
+					}
 				}
+			}
+			if firstInet != "" && s.Net == "no IPv4 address found" {
+				s.Net = firstInet // only loopback exists; show it honestly
 			}
 		}
 		if o, e := ExecCommand("uname", "-r").Output(); e == nil {
-			kernel = strings.TrimSpace(string(o))
+			s.Kernel = strings.TrimSpace(string(o))
 		}
 	}
-	uptime := "unknown"
 	if o, err := os.ReadFile("/proc/uptime"); err == nil {
-		uptime = strings.TrimSpace(strings.SplitN(string(o), " ", 2)[0]) + " seconds"
+		s.Uptime = strings.TrimSpace(strings.SplitN(string(o), " ", 2)[0]) + " seconds"
 	}
-	rows := 0
 	if b, err := os.ReadFile(DefaultAuditPath()); err == nil {
-		rows = len(strings.Split(strings.TrimRight(string(b), "\n"), "\n"))
+		s.AuditRows = len(strings.Split(strings.TrimRight(string(b), "\n"), "\n"))
 	}
-	toolkit := false
 	if st, err := os.Stat("/toolkit"); err == nil && st.IsDir() {
-		toolkit = true
+		s.Toolkit = true
 	}
-	fmt.Print(composeStatus(host, kernel, netLine, uptime, rows, toolkit))
-	return nil
+	return s
 }
 
 // runDetectHW implements `manx detect-hw` (read-only): mirrors detect-hw.sh by
