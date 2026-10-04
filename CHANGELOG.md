@@ -2,25 +2,26 @@
 
 All notable changes to MANX are documented here (Keep a Changelog, semver from v0).
 
-## [Unreleased]
+## [0.0.4] - 2026-10-04
+
+### Added
+- TUI polish: ASCII-cat header, **live status strip** (2 s ticker — UTC clock,
+  host, kernel, uptime, toolkit, net, audit-row count), **rotating motd
+  truths** (`t` bump), **audit-tail pane**, 5-line output viewport,
+  alt-screen rendering.
+- `docs/BENCH-REPORT-v0.0.4.md` (12/12 PASS).
+- `docs/VENDOR-RESTORE-KIT.md`: Cove/N-able restore-kit manifest — public
+  links where they exist, provenance where they don't (update-only installer
+  is console-derived), versions + SHA256s; Rule Zero stated;
+  licensed-test-device gap tracked internally, not as a public issue.
 
 ### Changed
-- `manx-tui` polish pass: ASCII-cat header with a **live status strip**
-  (UTC clock, host, kernel, uptime, toolkit state, net (non-loopback
-  preferred), audit-row count) refreshed every 2 s; a **rotating truth line**
-  (the boot motd's incident-response + creature-care truths, themed via the
-  `t` key); a compact **audit-tail pane** (last rows, view-tagged, refusals
-  shown); output viewport trimmed to 5 lines; alt-screen rendering so the
-  ticker doesn't spam scrollback.
-- `manx status` / TUI strip now prefers a non-loopback IPv4 interface when
-  reporting the net line (loopback is shown honestly if it is all there is).
-- `actions.StatusSnapshot()` extracts the same gathered values the CLI verb
-  renders — one implementation, three views (CLI text unchanged apart from
-  the net preference).
-- `docs/VENDOR-RESTORE-KIT.md`: Cove/N-able restore-kit manifest — public links
-  where they exist, provenance where they don't (update-only installer is
-  console-derived), versions + SHA256s; Rule Zero stated; licensed-test-device
-  gap tracked internally, not as a public issue.
+- `actions.StatusSnapshot()` extracted as the single gatherer behind the
+  `status` verb and the TUI strip — one implementation, three views.
+- The net line prefers a non-loopback IPv4 interface (loopback is shown
+  honestly if it is all there is).
+
+## [Unreleased]
 
 ## [0.0.3] - 2026-10-03
 
