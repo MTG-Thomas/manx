@@ -4,6 +4,12 @@ All notable changes to MANX are documented here (Keep a Changelog, semver from v
 
 ## [Unreleased]
 
+### Docs
+- `docs/VENDOR-RESTORE-KIT.md`: Cove/N-able restore-kit manifest — public links
+  where they exist, provenance where they don't (update-only installer is
+  console-derived), versions + SHA256s; Rule Zero stated; licensed-test-device
+  gap tracked internally, not as a public issue.
+
 ## [0.0.3] - 2026-10-03
 
 ### Added

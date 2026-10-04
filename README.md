@@ -39,6 +39,13 @@ cosign verify-blob --bundle SHA256SUMS.sigstore.json \
   SHA256SUMS
 ```
 
+## Vendor restore kit
+
+The Cove/N-able restore binaries MANX orchestrates (per spec §10.2b) are
+documented with links, versions and SHA256s in
+[`docs/VENDOR-RESTORE-KIT.md`](docs/VENDOR-RESTORE-KIT.md). Vendor-licensed
+binaries are fetched and hash-checked at rescue/build time — never committed.
+
 ## Layout (codex-swarm parity)
 
 ```
