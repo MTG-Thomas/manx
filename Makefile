@@ -21,7 +21,7 @@ fmt-check:
 	test -z "$$(gofmt -l cmd internal)" || (gofmt -l cmd internal && exit 1)
 
 vulncheck:
-	govulncheck ./... || true
+	govulncheck ./...
 
 check: fmt-check vet test
 

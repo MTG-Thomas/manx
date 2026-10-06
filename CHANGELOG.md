@@ -42,6 +42,11 @@ All notable changes to MANX are documented here (Keep a Changelog, semver from v
   uncalled code paths, so this is defence-in-depth rather than a fix.
   `golang.org/x/sync` followed to `v0.23.0` as a transitive requirement.
   `govulncheck ./...` now reports zero findings at every level.
+- `make vulncheck` no longer swallows failures (`|| true` removed): the target
+  now exits non-zero on a finding *or* on a missing `govulncheck` binary, so
+  it reports honestly instead of printing success while running nothing.
+  CI enforcement is unchanged — `govulncheck.yml` uses the action, not this
+  target, and CONTRIBUTING already documents it as CI-enforced.
 
 ## [0.0.3] - 2026-10-03
 
