@@ -31,6 +31,18 @@ All notable changes to MANX are documented here (Keep a Changelog, semver from v
 - Spec: `harness-up` added to the parity verb list (§10.3 bootstrap of an
   on-box agent harness; runner.choice pending operator decision).
 
+### Changed
+- Toolchain: `go.mod` directive bumped `go 1.24` → `go 1.27.1` (latest stable
+  at time of writing; matches the codex-swarm patch-level pin convention).
+  CI already tracked `go-version: stable`, so this aligns the pin with what
+  CI was building all along.
+- Indirect deps (govulncheck hygiene; all three are transitive via Bubble Tea):
+  `golang.org/x/text` `v0.3.8` → `v0.42.0` and `golang.org/x/sys` `v0.30.0`
+  → `v0.48.0`, clearing GO-2026-5970 and GO-2026-5024 — both were in
+  uncalled code paths, so this is defence-in-depth rather than a fix.
+  `golang.org/x/sync` followed to `v0.23.0` as a transitive requirement.
+  `govulncheck ./...` now reports zero findings at every level.
+
 ## [0.0.3] - 2026-10-03
 
 ### Added
