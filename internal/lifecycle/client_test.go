@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/MTG-Thomas/manx/internal/lifecycle/contract"
@@ -18,6 +19,29 @@ import (
 type transport func(*http.Request) (*http.Response, error)
 
 func (fn transport) RoundTrip(request *http.Request) (*http.Response, error) { return fn(request) }
+
+func TestReopenRefreshesBootWithoutReplacingInstallation(t *testing.T) {
+	boot, err := os.ReadFile("/proc/sys/kernel/random/boot_id")
+	if err != nil {
+		t.Skip("Linux boot identity unavailable")
+	}
+	client, err := Open(filepath.Join(t.TempDir(), "private"), "https://lab.invalid")
+	if err != nil {
+		t.Fatal(err)
+	}
+	installation := client.State.InstallationID
+	client.State.BootID = UUID() // Checkpoint from an earlier kernel boot.
+	if err := client.save(); err != nil {
+		t.Fatal(err)
+	}
+	reopened, err := Open(client.Directory, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reopened.State.BootID != strings.TrimSpace(string(boot)) || reopened.State.InstallationID != installation {
+		t.Fatal("boot reconciliation changed installation or retained stale boot")
+	}
+}
 
 func TestOfflineJournalSurvivesRestart(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "private")

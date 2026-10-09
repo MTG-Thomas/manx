@@ -152,6 +152,15 @@ func Open(directory, endpoint string) (*Client, error) {
 			return nil, err
 		}
 	}
+	if boot, err := os.ReadFile("/proc/sys/kernel/random/boot_id"); err == nil {
+		current := strings.TrimSpace(string(boot))
+		if c.State.BootID != current {
+			c.State.BootID = current
+			if err := c.save(); err != nil {
+				return nil, err
+			}
+		}
+	}
 	return c, nil
 }
 
