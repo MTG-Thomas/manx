@@ -109,9 +109,17 @@ func (m model) Init() tea.Cmd {
 // into a string. This is the contract behavior, not the TUI; the capture is
 // presentation-only.
 func (m *model) runVerb(verb string) (string, error) {
+	return m.runVerbArgs(verb, nil)
+}
+
+func (m *model) runSession(operation string) (string, error) {
+	return m.runVerbArgs("session", []string{operation})
+}
+
+func (m *model) runVerbArgs(verb string, args []string) (string, error) {
 	r, w, err := os.Pipe()
 	if err != nil {
-		return "", m.gr.RunView(viewTUI, verb, nil)
+		return "", m.gr.RunView(viewTUI, verb, args)
 	}
 	saved := os.Stdout
 	os.Stdout = w
@@ -120,7 +128,7 @@ func (m *model) runVerb(verb string) (string, error) {
 		b, _ := io.ReadAll(r)
 		out <- b
 	}()
-	runErr := m.gr.RunView(viewTUI, verb, nil)
+	runErr := m.gr.RunView(viewTUI, verb, args)
 	_ = w.Close() // unblocks the reader regardless of run outcome
 	b := <-out
 	_ = r.Close()
@@ -155,6 +163,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.last = fmt.Sprintf("\u2713 %s\n%s", verb, strings.TrimSpace(out))
 			}
 			m.last = trimLines(m.last, maxOutLines)
+		case "r", "s", "y", "d":
+			if m.verbs[m.cursor].verb == "session" {
+				operation := map[string]string{"r": "register", "s": "status", "y": "sync", "d": "record"}[msg.String()]
+				out, err := m.runSession(operation)
+				m.last = trimLines(out, maxOutLines)
+				if err != nil {
+					m.last = "session: " + err.Error()
+				}
+			}
 		case "t":
 			return m, func() tea.Msg { return truthMsg{m.truth + 1} }
 		}
@@ -272,22 +289,18 @@ func (m model) View() string {
 	}
 	s += ruleStyle.Render(strings.Repeat("\u2500", 64)) + "\n"
 	s += helpStyle.Render("\u2191/\u2193 select \u00b7 Enter run (GateRunner-audited, view=tui) \u00b7 t truth \u00b7 q quit")
+	if m.verbs[m.cursor].verb == "session" {
+		s += "\n" + helpStyle.Render("session: r register · s status · y sync · d diagnostic")
+	}
 	return s
 }
 
 func initialVerbs() []viewOf {
-	// Mirrored from the parity contract (internal/actions/parity.go — SPEC_VERBS).
-	return []viewOf{
-		{verb: "status", help: "one-line runtime summary"},
-		{verb: "detect-hw", help: "unclaimed/missing-driver hardware"},
-		{verb: "collect", help: "harvest logs/evtx/minidumps (read-only)"},
-		{verb: "setup", help: "stage /toolkit from the boot media"},
-		{verb: "img-in", help: "disk inventory (read-only)"},
-		{verb: "img-out", help: "image a volume (destructive)", danger: true},
-		{verb: "hive-edit", help: "SAFE offline hive edit (destructive)", danger: true},
-		{verb: "bootstrap-drivers", help: "runtime driver fetch ladder (mutating)", danger: true},
-		{verb: "bringup-windows-vm", help: "qemu/OVMF bringup (destructive)", danger: true},
+	var result []viewOf
+	for _, action := range actions.Default().List() {
+		result = append(result, viewOf{verb: action.Verb, help: action.Summary, danger: action.Danger})
 	}
+	return result
 }
 
 func main() {

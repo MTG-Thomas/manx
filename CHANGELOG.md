@@ -24,6 +24,8 @@ All notable changes to MANX are documented here (Keep a Changelog, semver from v
 ## [Unreleased]
 
 ### Added
+- Restricted `session` enrollment/diagnostic adapter shared by CLI, menu and TUI,
+  with independent recovery keys, atomic offline journal and idempotent sync.
 - `docs/runbooks/`: agent-first operating card + bootloop-triage ladder +
   Cove-restore-lane + qemu-guest disk-surgery walk-throughs — machine-structured
   (flat front-matter: title/triggers/first-verbs/spec), CI-locked: a runbook may
