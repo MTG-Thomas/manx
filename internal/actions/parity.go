@@ -10,6 +10,7 @@ var SPEC_VERBS = []string{
 	"collect",
 	"setup",
 	"img-in",
+	"session",
 	"hive-edit",
 	"img-out",
 	"bootstrap-drivers",

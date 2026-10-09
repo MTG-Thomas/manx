@@ -72,6 +72,7 @@ func Default() *Registry {
 		Runs: runSetup})
 	must(r, Action{Verb: "img-in", Summary: "read-only disk/volume inventory (lsblk/blkid)",
 		Runs: runImgIn})
+	must(r, Action{Verb: "session", Args: []string{"register|status|sync|record"}, Summary: "restricted recovery enrollment and offline diagnostic journal", Runs: runSession})
 
 	// Destructive verbs: require --i-know in every view + audit row with Danger.
 	must(r, Action{Verb: "hive-edit", Danger: true, Summary: "SAFE hive edit template (snapshot first; edit copy; stage back)",

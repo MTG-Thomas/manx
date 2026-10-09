@@ -41,6 +41,7 @@ status            one-line runtime summary (net/mesh/drivers/scratch)
 detect-hw         inventory unclaimed / missing-driver hardware
 collect           harvest logs, evtx, minidumps, catalog listings (read-only)
 img-in            disk/volume inventory (read-only)
+session           enrollment status, pairing and offline diagnostic sync
 img-out           image a volume/partition to a file (destructive)
 hive-inspect      read-only hive dump (hivexsh / reglookup / chntpw view)
 hive-edit         SAFE offline hive edit (snapshot first, destructive)
@@ -71,6 +72,10 @@ while true; do
   rc=$?
   [ $rc -ne 0 ] && whiptail --msgbox "Quitting the menu drops to the rescue shell. Type 'menu' to return." 10 50 && break
   case "$SEL" in
+    session)
+      SESSION_ACTION=$(whiptail --title 'Recovery session' --menu 'Restricted enrollment only' 16 70 4 register 'Register recovery session' status 'Show pairing and session state' sync 'Synchronize pending events' record 'Record hardware diagnostic checkpoint' 3>&1 1>&2 2>&3) || continue
+      manx session "$SESSION_ACTION" 2>&1 | tee -a "$OUT/last-run.log"
+      ;;
     status|detect-hw|collect|img-in)                       run_verb "$SEL" ;;
     img-out)                                              run_verb img-out ;;
     hive-inspect)                                         run_verb hive-inspect ;;
