@@ -10,8 +10,24 @@
 
 set -eu
 : "${OUT:=/toolkit/out}"
+if [ "$(id -u)" -ne 0 ]; then
+  echo "bootstrap-drivers requires root" >&2
+  exit 1
+fi
 mkdir -p "$OUT"
 LOG="$OUT/drivers.log"
+
+DSU_TMP=""
+DSU_BOOTSTRAP=""
+
+cleanup_dsu() {
+  if [ -n "$DSU_BOOTSTRAP" ]; then
+    rm -f -- "$DSU_BOOTSTRAP"
+  fi
+  if [ -n "$DSU_TMP" ]; then
+    rmdir -- "$DSU_TMP" 2>/dev/null || true
+  fi
+}
 
 runlog() {
   echo "+ $*" | tee -a "$LOG"
@@ -73,8 +89,23 @@ if [ "${MANX_VENDOR_LANE:-1}" = 1 ] && [ -f /sys/class/dmi/id/product_name ]; th
   case "$VEND" in
     Dell*)
       runlog echo "-- L3: Dell lane via DSU bootstrap"
-      runlog curl -fsSL https://linux.dell.com/repo/hardware/dsu/bootstrap.cgi -o /tmp/bootstrap.cgi
-      runlog sh /tmp/bootstrap.cgi
+      DSU_TMP="$(umask 077 && mktemp -d "${TMPDIR:-/tmp}/manx-dsu.XXXXXXXX")"
+      DSU_BOOTSTRAP="$DSU_TMP/bootstrap.cgi"
+      trap cleanup_dsu 0
+      trap 'cleanup_dsu; exit 1' 1 2 15
+      chmod 700 "$DSU_TMP"
+      runlog curl -fsSL https://linux.dell.com/repo/hardware/dsu/bootstrap.cgi -o "$DSU_BOOTSTRAP"
+      if [ ! -f "$DSU_BOOTSTRAP" ] || [ -L "$DSU_BOOTSTRAP" ] ||
+        [ "$(stat -c %u "$DSU_BOOTSTRAP")" != "$(id -u)" ]; then
+        echo "L3: refusing unsafe DSU bootstrap file" | tee -a "$LOG"
+        exit 1
+      fi
+      chmod 700 "$DSU_BOOTSTRAP"
+      runlog sh "$DSU_BOOTSTRAP"
+      cleanup_dsu
+      trap - 0 1 2 15
+      DSU_TMP=""
+      DSU_BOOTSTRAP=""
       if command -v dsu >/dev/null 2>&1; then
         runlog dsu --collect-details
         runlog dsu --driver

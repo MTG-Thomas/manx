@@ -25,6 +25,11 @@ All notable changes to MANX are documented here (Keep a Changelog, semver from v
 
 - Require Go 1.27.2 to include the HTTP/TLS standard-library fixes identified by lifecycle CI.
 
+### Fixed
+- Download the Dell DSU bootstrap into a root-owned private temporary directory,
+  validate the handoff file, and remove it after execution instead of reopening
+  a predictable path in shared `/tmp`.
+
 ### Added
 - Restricted `session` enrollment/diagnostic adapter shared by CLI, menu and TUI,
   with independent recovery keys, atomic offline journal and idempotent sync.
