@@ -26,6 +26,8 @@ All notable changes to MANX are documented here (Keep a Changelog, semver from v
 - Require Go 1.27.2 to include the HTTP/TLS standard-library fixes identified by lifecycle CI.
 
 ### Fixed
+- Validate bench workflow inputs and pass them through environment variables so
+  manual dispatch values cannot be evaluated as runner shell source.
 - Download the Dell DSU bootstrap into a root-owned private temporary directory,
   validate the handoff file, and remove it after execution instead of reopening
   a predictable path in shared `/tmp`.
