@@ -26,6 +26,12 @@ on:
         description: "acceptance set: 8b.6 | 10.7 | 10.8 (default: all)"
         required: false
         default: all
+        type: choice
+        options:
+          - all
+          - 8b.6
+          - "10.7"
+          - "10.8"
 
 permissions:
   contents: read
@@ -34,21 +40,32 @@ jobs:
   bench:
     runs-on: [self-hosted, manx-bench]
     environment: bench
+    env:
+      BENCH_RUN_ID: ${{ inputs.run_id }}
+      BENCH_TEST_SET: ${{ inputs.test_set || 'all' }}
     steps:
       - name: scope guard (never trust inputs to build code here)
         run: |
+          set -euo pipefail
+          case "$BENCH_RUN_ID" in
+            ''|*[!0-9]*) echo "run_id must contain only decimal digits" >&2; exit 2 ;;
+          esac
+          case "$BENCH_TEST_SET" in
+            all|8b.6|10.7|10.8) ;;
+            *) echo "unsupported test_set" >&2; exit 2 ;;
+          esac
           echo "runner: $(uname -a)" >> "$GITHUB_STEP_SUMMARY"
-          echo "This bench boot-tests the artifact set produced by run ${{ inputs.run_id }}."
+          printf 'This bench boot-tests the artifact set produced by run %s.\n' "$BENCH_RUN_ID"
           echo "It does NOT compile code; a validation-only lane."
 
       - name: lock to the referenced artifact set
         run: |
           set -e
           # bench-side helper (runner profile, NOT this repo) fetches the artifact
-          # set produced by run ${{ inputs.run_id }}; the runner token is scoped to
+          # set produced by the validated run id; the runner token is scoped to
           # actions:read on MTG-Thomas/manx only (least privilege).
           # It lands artifacts under $RUNNER_TEMP (ephemeral); never /toolkit.
-          manx-bench-fetch "${{ inputs.run_id }}"
+          manx-bench-fetch "$BENCH_RUN_ID"
           test -f "$RUNNER_TEMP/manx-iso/out.iso" || { echo "ISO not fetched"; exit 1; }
           sha256sum "$RUNNER_TEMP/manx-iso/out.iso" >> "$GITHUB_STEP_SUMMARY"
 
@@ -59,17 +76,25 @@ jobs:
           # net-up + detect-hw output, writes bench-summary for the workflow summary.
           sudo /opt/manx-bench/boot-test.sh \
             --iso "$RUNNER_TEMP/manx-iso/out.iso" \
-            --set "${{ inputs.test_set || 'all' }}" \
+            --set "$BENCH_TEST_SET" \
             2>&1 | tee bench-summary.md
           cp bench-summary.md "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
 
       - name: record outcome (advisory)
         if: always()
         run: |
+          case "$BENCH_RUN_ID" in
+            ''|*[!0-9]*) run_label='<invalid>' ;;
+            *) run_label="$BENCH_RUN_ID" ;;
+          esac
+          case "$BENCH_TEST_SET" in
+            all|8b.6|10.7|10.8) set_label="$BENCH_TEST_SET" ;;
+            *) set_label='<invalid>' ;;
+          esac
           {
             echo "## bench result"
             echo ""
-            echo "run: [${{ inputs.run_id }}] set: ${{ inputs.test_set }}"
+            printf 'run: [%s] set: %s\n' "$run_label" "$set_label"
             echo ""
             tail -50 bench-summary.md 2>/dev/null || echo "(no summary captured)"
           } >> "$GITHUB_STEP_SUMMARY"
