@@ -1,4 +1,4 @@
-﻿name: govulncheck
+name: govulncheck
 on:
   pull_request:
     branches: [main]
@@ -10,7 +10,7 @@ jobs:
   vuln:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f
         with:
           go-version-input: 1.27.2
