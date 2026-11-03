@@ -27,3 +27,10 @@ check: fmt-check vet test
 
 clean:
 	rm -rf bin
+
+.PHONY: secret-scan pre-push
+# Local authenticated gate; keep CI/check/test targets unchanged.
+secret-scan:
+	python3 scripts/secret_gate.py
+
+pre-push: secret-scan

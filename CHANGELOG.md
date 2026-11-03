@@ -23,6 +23,11 @@ All notable changes to MANX are documented here (Keep a Changelog, semver from v
 
 ## [Unreleased]
 
+### Development
+
+- Add a fail-closed ggshield commit-history gate before local pushes and PRs.
+
+
 - Require Go 1.27.2 to include the HTTP/TLS standard-library fixes identified by lifecycle CI.
 
 ### Fixed
