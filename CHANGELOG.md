@@ -23,6 +23,10 @@ All notable changes to MANX are documented here (Keep a Changelog, semver from v
 
 ## [Unreleased]
 
+### Security
+
+- Require the Go 1.27.3 patch release for the crypto/x509 security fix (GO-2026-6809).
+
 ### Development
 
 - Add a fail-closed ggshield commit-history gate before local pushes and PRs.
