@@ -1,4 +1,4 @@
-﻿name: publish-github-release
+name: publish-github-release
 # Runs AFTER dry-run-release greens on a tag; creates the GitHub Release with
 # immutable assets (never re-uploaded â€” a fix means a new tag).
 on:
@@ -20,7 +20,7 @@ jobs:
           name: release-${{ github.event.workflow_run.head_branch }}
           path: dist
       - name: release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           files: |
             dist/out.iso
